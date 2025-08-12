@@ -2,8 +2,12 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
+	"path"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,54 +38,67 @@ func ConnectGCS(credentialPath, bucketName string) error {
 }
 
 func UploadFile(c *gin.Context) {
-	filename := c.Query("filename")
-	objectname := c.Query("objectname")
+	filename := strings.TrimSpace(c.Query("filename"))
+	folder := strings.TrimSpace(c.Query("folder"))
 
-	if filename == "" || objectname == "" {
-		c.JSON(http.StatusBadRequest, ApiResponse{Error: "filename and objectname are required"})
+	if filename == "" || folder == "" {
+		c.JSON(http.StatusBadRequest, ApiResponse{Error: "filename and folder are required"})
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), requestTimeout)
 	defer cancel()
 
-	_, err := uploader.UploadFile(ctx, filename, objectname, 0, nil)
+	objectname := path.Join(folder, filepath.Base(filename))
+
+	uploadSize, err := uploader.UploadFile(ctx, filename, objectname, 0, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ApiResponse{Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, ApiResponse{Message: "File uploaded successfully", Data: map[string]string{"path": objectname}})
+	size := fmt.Sprintf("%d bytes", uploadSize)
+	c.JSON(http.StatusCreated, ApiResponse{Message: "File uploaded successfully", Data: map[string]string{"path": objectname, "size": size}})
 }
 
 func DownloadFile(c *gin.Context) {
-	objectname := c.Query("objectname")
-	destination := c.Query("destination")
+	objectname := strings.TrimSpace(c.Query("objectname"))
+	destination := strings.TrimSpace(c.Query("destination"))
 
-	if objectname == "" || destination == "" {
-		c.JSON(http.StatusBadRequest, ApiResponse{Error: "objectname and destination are required"})
+	if objectname == "" {
+		c.JSON(http.StatusBadRequest, ApiResponse{Error: "objectname is required"})
 		return
+	}
+
+	if destination == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ApiResponse{Error: "Failed to get user home directory"})
+			return
+		}
+		destination = filepath.Join(home, "Downloads")
 	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), requestTimeout)
 	defer cancel()
 
-	_, err := uploader.DownloadFile(ctx, objectname, destination)
+	downloadSize, err := uploader.DownloadFile(ctx, objectname, destination)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ApiResponse{Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, ApiResponse{Message: "File downloaded successfully", Data: map[string]string{"path": destination}})
+	size := fmt.Sprintf("%d bytes", downloadSize)
+	c.JSON(http.StatusOK, ApiResponse{Message: "File downloaded successfully", Data: map[string]string{"path": destination, "size": size}})
 }
 
 func ListFiles(c *gin.Context) {
-	prefix := c.Query("prefix")
+	folder := strings.TrimSpace(c.Query("folder"))
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), requestTimeout)
 	defer cancel()
 
-	files, err := uploader.ListObjects(ctx, prefix)
+	files, err := uploader.ListObjects(ctx, folder)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ApiResponse{Error: err.Error()})
 		return
@@ -96,7 +113,7 @@ func ListFiles(c *gin.Context) {
 }
 
 func DeleteObject(c *gin.Context) {
-	objectname := c.Query("objectname")
+	objectname := strings.TrimSpace(c.Query("objectname"))
 
 	if objectname == "" {
 		c.JSON(http.StatusBadRequest, ApiResponse{Error: "objectname is required"})
@@ -116,7 +133,7 @@ func DeleteObject(c *gin.Context) {
 }
 
 func UploadBuffer(c *gin.Context) {
-	objectname := c.Query("objectname")
+	objectname := strings.TrimSpace(c.Query("objectname"))
 
 	if objectname == "" {
 		c.JSON(http.StatusBadRequest, ApiResponse{Error: "objectname is required"})
@@ -132,11 +149,11 @@ func UploadBuffer(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), requestTimeout)
 	defer cancel()
 
-	_, err = uploader.UploadBuffer(ctx, data, objectname, 0, nil)
+	uploadSize, err := uploader.UploadBuffer(ctx, data, objectname, 0, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ApiResponse{Error: err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusCreated, ApiResponse{Message: "Buffer uploaded successfully", Data: map[string]string{"path": objectname}})
+	size := fmt.Sprintf("%d bytes", uploadSize)
+	c.JSON(http.StatusCreated, ApiResponse{Message: "Buffer uploaded successfully", Data: map[string]string{"path": objectname, "size": size}})
 }

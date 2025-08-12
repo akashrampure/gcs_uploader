@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
+	"path/filepath"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
@@ -99,7 +101,7 @@ func (o *GCSUploader) UploadBuffer(ctx context.Context, filecontent []byte, obje
 	return nbytescopied, nil
 }
 
-func (o *GCSUploader) DownloadFile(ctx context.Context, objectname string, filename string) (int64, error) {
+func (o *GCSUploader) DownloadFile(ctx context.Context, objectname string, destination string) (int64, error) {
 	objectHandle := o.bucketHandle.Object(objectname)
 
 	objectReader, readererr := objectHandle.NewReader(ctx)
@@ -107,6 +109,8 @@ func (o *GCSUploader) DownloadFile(ctx context.Context, objectname string, filen
 		return 0, readererr
 	}
 	defer objectReader.Close()
+
+	filename := filepath.Join(destination, path.Base(objectname))
 
 	outputfile, err := os.Create(filename)
 	if err != nil {
