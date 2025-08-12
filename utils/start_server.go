@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Start(port, credentialsPath, bucketName string) {
+func StartServer(port, credentialsPath, bucketName string) {
 
 	if err := handler.ConnectGCS(credentialsPath, bucketName); err != nil {
 		log.Fatalf("Failed to connect to GCS: %v", err)
