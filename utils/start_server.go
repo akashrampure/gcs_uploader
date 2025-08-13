@@ -11,7 +11,7 @@ import (
 func StartServer() {
 	LoadEnv()
 
-	port := GetEnv("PORT", "8081")
+	port := GetEnv("PORT", "8080")
 	credentialsPath := GetEnv("CREDENTIALS", "credentials.json")
 	bucketName := GetEnv("BUCKET_NAME", "dmtfota")
 
