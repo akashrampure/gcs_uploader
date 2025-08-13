@@ -1,7 +1,7 @@
 package main
 
-import "gcsuploader/utils"
+import "gcsuploader/server"
 
 func main() {
-	utils.StartServer()
+	server.Start()
 }

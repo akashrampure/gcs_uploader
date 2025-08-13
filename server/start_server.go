@@ -1,19 +1,20 @@
-package utils
+package server
 
 import (
 	"gcsuploader/handler"
 	"gcsuploader/routes"
+	"gcsuploader/utils"
 	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
-func StartServer() {
-	LoadEnv()
+func Start() {
+	utils.LoadEnv()
 
-	port := GetEnv("PORT", "8080")
-	credentialsPath := GetEnv("CREDENTIALS", "credentials.json")
-	bucketName := GetEnv("BUCKET_NAME", "dmtfota")
+	port := utils.GetEnv("PORT", "8080")
+	credentialsPath := utils.GetEnv("CREDENTIALS", "credentials.json")
+	bucketName := utils.GetEnv("BUCKET_NAME", "dmtfota")
 
 	if err := handler.ConnectGCS(credentialsPath, bucketName); err != nil {
 		log.Fatalf("Failed to connect to GCS: %v", err)
