@@ -38,20 +38,32 @@ func ConnectGCS(credentialPath, bucketName string) error {
 }
 
 func UploadFile(c *gin.Context) {
-	filename := strings.TrimSpace(c.Query("filename"))
-	folder := strings.TrimSpace(c.Query("folder"))
+	folder := strings.TrimSpace(c.PostForm("folder"))
 
-	if filename == "" || folder == "" {
-		c.JSON(http.StatusBadRequest, ApiResponse{Error: "filename and folder are required"})
+	if folder == "" {
+		c.JSON(http.StatusBadRequest, ApiResponse{Error: "folder is required"})
+		return
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ApiResponse{Error: "file is required"})
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), requestTimeout)
 	defer cancel()
 
-	objectname := path.Join(folder, filepath.Base(filename))
+	objectname := path.Join(folder, filepath.Base(file.Filename))
 
-	uploadSize, err := uploader.UploadFile(ctx, filename, objectname, 0, nil)
+	src, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ApiResponse{Error: err.Error()})
+		return
+	}
+	defer src.Close()
+
+	uploadSize, err := uploader.UploadFile(ctx, src, objectname, 0, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ApiResponse{Error: err.Error()})
 		return

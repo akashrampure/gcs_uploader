@@ -101,7 +101,13 @@ func TestGCSUploaderIntegration(t *testing.T) {
 		}
 
 		objectName2 := prefix + "file_upload.txt"
-		n, err := uploader.UploadFile(ctx, tmpFile, objectName2, 0, func(n int64) {})
+
+		file, err := os.Open(tmpFile)
+		if err != nil {
+			t.Fatalf("failed to open temp file: %v", err)
+		}
+		defer file.Close()
+		n, err := uploader.UploadFile(ctx, file, objectName2, 0, func(n int64) {})
 		if err != nil {
 			t.Fatalf("UploadFile failed: %v", err)
 		}

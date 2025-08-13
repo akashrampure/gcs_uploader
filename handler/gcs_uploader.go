@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"os"
 	"path"
 	"path/filepath"
@@ -51,21 +52,15 @@ func (o *GCSUploader) Init() error {
 	return nil
 }
 
-func (o *GCSUploader) UploadFile(ctx context.Context, filename string, objectname string, writerChunkSize int, progressf func(int64)) (int64, error) {
+func (o *GCSUploader) UploadFile(ctx context.Context, file multipart.File, objectname string, writerChunkSize int, progressf func(int64)) (int64, error) {
 	objectHandle := o.bucketHandle.Object(objectname)
-
-	inputfile, err := os.Open(filename)
-	if err != nil {
-		return 0, fmt.Errorf("os.Open: %w", err)
-	}
-	defer inputfile.Close()
 
 	objectWriter := objectHandle.NewWriter(ctx)
 
 	objectWriter.ProgressFunc = progressf
 	objectWriter.ChunkSize = writerChunkSize
 
-	nbytescopied, err := io.Copy(objectWriter, inputfile)
+	nbytescopied, err := io.Copy(objectWriter, file)
 	if err != nil {
 		objectWriter.Close()
 		return 0, fmt.Errorf("io.Copy: %w", err)
