@@ -8,7 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func StartServer(port, credentialsPath, bucketName string) {
+func StartServer() {
+	LoadEnv()
+
+	port := GetEnv("PORT", "8081")
+	credentialsPath := GetEnv("CREDENTIALS", "credentials.json")
+	bucketName := GetEnv("BUCKET_NAME", "dmtfota")
 
 	if err := handler.ConnectGCS(credentialsPath, bucketName); err != nil {
 		log.Fatalf("Failed to connect to GCS: %v", err)
@@ -17,5 +22,6 @@ func StartServer(port, credentialsPath, bucketName string) {
 	router := gin.Default()
 	gin.SetMode(gin.ReleaseMode)
 	routes.GCSRouter(router)
+	log.Printf("Server started on port %s", port)
 	router.Run(":" + port)
 }
