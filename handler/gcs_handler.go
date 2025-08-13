@@ -169,3 +169,23 @@ func UploadBuffer(c *gin.Context) {
 	size := fmt.Sprintf("%d bytes", uploadSize)
 	c.JSON(http.StatusCreated, ApiResponse{Message: "Buffer uploaded successfully", Data: map[string]string{"path": objectname, "size": size}})
 }
+
+func GetObjectUrl(c *gin.Context) {
+	objectname := strings.TrimSpace(c.Query("objectname"))
+
+	if objectname == "" {
+		c.JSON(http.StatusBadRequest, ApiResponse{Error: "objectname is required"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), requestTimeout)
+	defer cancel()
+
+	url, err := uploader.GetObjectUrl(ctx, objectname)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ApiResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, ApiResponse{Message: "Object url", Data: map[string]string{"url": url}})
+}

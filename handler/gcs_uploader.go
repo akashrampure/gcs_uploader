@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
@@ -159,4 +160,20 @@ func (o *GCSUploader) DeleteObject(ctx context.Context, objectName string) error
 	}
 
 	return nil
+}
+
+func (o *GCSUploader) GetObjectUrl(ctx context.Context, objectName string) (string, error) {
+	if o.bucketHandle == nil {
+		return "", fmt.Errorf("bucket handle is not initialized")
+	}
+
+	signedUrl, err := o.bucketHandle.SignedURL(objectName, &storage.SignedURLOptions{
+		Method:  "GET",
+		Headers: []string{"*"},
+		Expires: time.Now().Add(time.Hour * 24),
+	})
+	if err != nil {
+		return "", err
+	}
+	return signedUrl, nil
 }

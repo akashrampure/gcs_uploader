@@ -14,5 +14,6 @@ func GCSRouter(r *gin.Engine) {
 		api.GET("/download", gcs.DownloadFile)
 		api.DELETE("/delete", gcs.DeleteObject)
 		api.POST("/upload-buffer", gcs.UploadBuffer)
+		api.GET("/object-url", gcs.GetObjectUrl)
 	}
 }
