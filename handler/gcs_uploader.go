@@ -53,6 +53,10 @@ func (o *GCSUploader) Init() error {
 }
 
 func (o *GCSUploader) UploadFile(ctx context.Context, file io.Reader, objectname string, writerChunkSize int, progressf func(int64)) (int64, error) {
+	if o.bucketHandle == nil {
+		return 0, fmt.Errorf("bucket handle is not initialized")
+	}
+
 	objectHandle := o.bucketHandle.Object(objectname)
 
 	objectWriter := objectHandle.NewWriter(ctx)
@@ -75,6 +79,10 @@ func (o *GCSUploader) UploadFile(ctx context.Context, file io.Reader, objectname
 }
 
 func (o *GCSUploader) UploadBuffer(ctx context.Context, filecontent []byte, objectname string, writerChunkSize int, progressf func(int64)) (int64, error) {
+	if o.bucketHandle == nil {
+		return 0, fmt.Errorf("bucket handle is not initialized")
+	}
+
 	objectHandle := o.bucketHandle.Object(objectname)
 
 	objectWriter := objectHandle.NewWriter(ctx)
@@ -97,6 +105,10 @@ func (o *GCSUploader) UploadBuffer(ctx context.Context, filecontent []byte, obje
 }
 
 func (o *GCSUploader) DownloadFile(ctx context.Context, objectname string, destination string) (int64, error) {
+	if o.bucketHandle == nil {
+		return 0, fmt.Errorf("bucket handle is not initialized")
+	}
+
 	objectHandle := o.bucketHandle.Object(objectname)
 
 	objectReader, readererr := objectHandle.NewReader(ctx)
