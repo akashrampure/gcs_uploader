@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"mime/multipart"
 	"os"
 	"path"
 	"path/filepath"
@@ -52,7 +51,7 @@ func (o *GCSUploader) Init() error {
 	return nil
 }
 
-func (o *GCSUploader) UploadFile(ctx context.Context, file multipart.File, objectname string, writerChunkSize int, progressf func(int64)) (int64, error) {
+func (o *GCSUploader) UploadFile(ctx context.Context, file io.Reader, objectname string, writerChunkSize int, progressf func(int64)) (int64, error) {
 	objectHandle := o.bucketHandle.Object(objectname)
 
 	objectWriter := objectHandle.NewWriter(ctx)
