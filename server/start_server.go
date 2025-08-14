@@ -20,8 +20,8 @@ func Start() {
 		log.Fatalf("Failed to connect to GCS: %v", err)
 	}
 
-	router := gin.Default()
 	gin.SetMode(gin.ReleaseMode)
+	router := gin.Default()
 	routes.GCSRouter(router)
 	log.Printf("Server started on port %s", port)
 	router.Run(":" + port)
